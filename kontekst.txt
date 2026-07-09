@@ -1,0 +1,34 @@
+# Kontekst Projektu: Gastro Scheduler
+
+## Cel projektu
+Tworzę pełnoprawną, komercyjną aplikację backendową (REST API) dla restauracji do inteligentnego zarządzania grafikiem pracy. Projekt ma prezentować wysoki rynkowy standard techniczny (portfolio-ready). Głównym wyróżnikiem systemu jest docelowe wykorzystanie AI do przewidywania obłożenia lokalu (na podstawie rezerwacji, pogody itp.) i automatyczna optymalizacja zapotrzebowania na personel.
+
+## Stos Technologiczny i Architektura (Docelowo)
+* **Język i Framework:** Python, FastAPI.
+* **Baza danych:** PostgreSQL + ORM (SQLAlchemy).
+* **Infrastruktura:** Konteneryzacja za pomocą Dockera (Docker Compose).
+* **Jakość kodu:** Testy automatyczne (Pytest) oraz interaktywna dokumentacja API (Swagger/OpenAPI).
+* **Architektura:** Logika biznesowa wydzielona do warstwy serwisów (Service Layer), ścisłe trzymanie się zasad programowania obiektowego (OOP) i czystego kodu.
+
+## Główne funkcjonalności
+1. **Zarządzanie pracownikami:** Przechowywanie danych personelu (ID, imię, nazwisko, rola).
+2. **Dyspozycyjność (Availability):** Pracownicy podają swoją dostępność na wybrane tygodnie.
+3. **Generowanie grafiku (Schedule):** 
+   * Menedżer może wygenerować grafik ręcznie lub system wygeneruje go automatycznie.
+   * Możliwość ręcznej edycji i nadpisania wygenerowanego grafiku.
+4. **Śledzenie czasu pracy i priorytetyzacja:** System zlicza przepracowane godziny. Osoby pracujące najwięcej mają pierwszeństwo przy przydzielaniu kolejnych zmian.
+5. **Rezerwacje (Reservations):** Moduł zapisywania rezerwacji stolików, który zasila moduł AI danymi o przewidywanym ruchu.
+
+## Obecny stan kodu
+Projekt jest na wczesnym etapie budowania logiki domenowej (czysty Python OOP, przed wdrożeniem frameworka webowego i bazy). Kod podzielono na dedykowane serwisy:
+* `Employee` - główny model danych (`id`, `name`, `surname`, `role`, `availability`, `hours_worked`).
+* `EmployeeService` - zarządzanie bazą pracowników.
+* `AvailabilityService` - logika zgłaszania i walidacji dyspozycyjności przez pracowników.
+* `ScheduleService` - logika układania, edytowania i eksportu grafiku.
+* `ReservationService` - obsługa wprowadzania rezerwacji.
+
+## Moje preferencje dotyczące współpracy z AI
+Projekt służy mi do nauki i solidnego wdrożenia się w komercyjne standardy pracy.
+* Nie pisz dla mnie gotowych rozwiązań ani całych klas od zera.
+* Pełnij rolę Senior Developera / Mentora: podpowiadaj odpowiednie struktury danych, wskazuj najlepsze rynkowe praktyki, zwracaj uwagę na przypadki brzegowe (edge cases) i potencjalne problemy (np. walidacja, wydajność bazy).
+* Zamiast dawać gotowy kod, zadawaj pytania pomocnicze i pomagaj mi samodzielnie rozwiązywać napotkane błędy.
