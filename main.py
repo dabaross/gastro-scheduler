@@ -22,14 +22,25 @@ class EmployeeService():
     def __init__(self):
         self.employeesBase = []
 
-    def add_employee(self, imie, nazwisko, rola):
+    def add_employee(self, name, surname, role):
         new_id = len(self.employeesBase) + 1
-        new_employee = Employee(new_id, imie, nazwisko, rola) 
+        new_employee = Employee(new_id, name, surname, role) 
         self.employeesBase.append(new_employee)
         
+    def get_all(self):
+        for employee in self.employeesBase:
+            print(f"ID {employee.id}, {employee.name}, {employee.surname}")
 
-#TODO 
-#  get_all() — zwraca wszystkich pracowników
-#  get_by_id(id) — zwraca jednego pracownika
-#  remove_employee(id) — usuwa pracownik
+    def get_by_id(self, id):
+        for employee in self.employeesBase:
+            if employee.id == id:
+                print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
+
+    def remove_employee(self, id):
+        for employee in self.employeesBase:
+            if employee.id == id:
+                self.employeesBase.remove(employee)
+                break
+
+
 
