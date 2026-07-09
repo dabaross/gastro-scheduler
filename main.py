@@ -31,5 +31,5 @@ class EmployeeService():
 #TODO 
 #  get_all() — zwraca wszystkich pracowników
 #  get_by_id(id) — zwraca jednego pracownika
-#  remove_employee(id) — usuwa pracownika
+#  remove_employee(id) — usuwa pracownik
 
