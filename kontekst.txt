@@ -1,7 +1,10 @@
 # Kontekst Projektu: Gastro Scheduler
 
 ## Cel projektu
-Tworzę pełnoprawną, komercyjną aplikację backendową (REST API) dla restauracji do inteligentnego zarządzania grafikiem pracy. Projekt ma prezentować wysoki rynkowy standard techniczny (portfolio-ready). Głównym wyróżnikiem systemu jest docelowe wykorzystanie AI do przewidywania obłożenia lokalu (na podstawie rezerwacji, pogody itp.) i automatyczna optymalizacja zapotrzebowania na personel.
+Tworzę pełnoprawną, komercyjną aplikację backendową (REST API) dla restauracji do inteligentnego zarządzania grafikiem pracy. 
+Projekt ma prezentować wysoki rynkowy standard techniczny (mid/junior level) (portfolio-ready). 
+Głównym wyróżnikiem systemu jest docelowe wykorzystanie AI do przewidywania obłożenia lokalu (na podstawie rezerwacji, pogody itp.) i automatyczna optymalizacja zapotrzebowania na personel.
+W przyszłosci możliwa rozbudowa o spersonalizowany RAG dla obsługi.
 
 ## Stos Technologiczny i Architektura (Docelowo)
 * **Język i Framework:** Python, FastAPI.
