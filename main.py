@@ -1,5 +1,6 @@
 class Employee:
-    def __init__(self, id, name, surname, role, availability, hours_worked):
+    def __init__(self, id, name, surname, role, availability=None, hours_worked=None):
+        self.id = id
         self.name = name
         self.surname = surname
         self.role = role
@@ -26,10 +27,11 @@ class EmployeeService():
         new_id = len(self.employeesBase) + 1
         new_employee = Employee(new_id, name, surname, role) 
         self.employeesBase.append(new_employee)
+        print(f"Added new employee with ID: {new_id}")
         
     def get_all(self):
         for employee in self.employeesBase:
-            print(f"ID {employee.id}, {employee.name}, {employee.surname}")
+            print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
 
     def get_by_id(self, id):
         for employee in self.employeesBase:
@@ -40,7 +42,6 @@ class EmployeeService():
         for employee in self.employeesBase:
             if employee.id == id:
                 self.employeesBase.remove(employee)
+                print(f"Usunieto pracownika z ID: {id}")
                 break
-
-
 
