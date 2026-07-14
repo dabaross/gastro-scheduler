@@ -7,11 +7,11 @@ class Employee:
         
         if availability is None:
             availability = {}
-            self.availability = availability
+        self.availability = availability
         
         if hours_worked is None:
             hours_worked = {}
-            self.hours_worked = hours_worked
+        self.hours_worked = hours_worked
 
 
 # TODO 
