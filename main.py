@@ -1,23 +1,20 @@
 class Employee:
-    def __init__(self, id, name, surname, role, availability=None, hours_worked=None):
+    def __init__(self, id, name, surname, role, availability = None, hours_worked=None):
         self.id = id
         self.name = name
         self.surname = surname
         self.role = role
-        self.availability = availability
-        self.hours_worked = hours_worked
-
+        
+        if availability is None:
+            availability = {}
+            self.availability = availability
+        
+        if hours_worked is None:
+            hours_worked = {}
+            self.hours_worked = hours_worked
 
 
 # TODO 
-# 1. AvailabilityService: Szlify metody set_availability
-#    - Dodać instrukcję `break` po znalezieniu pracownika (optymalizacja pętli).
-#    - Dodać obsługę błędu (np. print), gdy pętla przejdzie całość i nie znajdzie pracownika (błędne ID).
-
-# 2. AvailabilityService: Nowa metoda get_availability
-#    - Napisać metodę def get_availability(self, employee_id):
-#    - Metoda ma odszukać pracownika i zwrócić (lub wydrukować) jego aktualny słownik dyspozycji.
-
 # 3. Testy "na sucho" (na samym dole pliku)
 #    - Utworzyć obiekt EmployeeService i dodać 2-3 pracowników.
 #    - Utworzyć obiekt AvailabilityService (wstrzyknąć mu EmployeeService).
@@ -26,7 +23,6 @@ class Employee:
 # 4. ScheduleService (Nowy, główny moduł)
 #    - Zaprojektować strukturę zapotrzebowania restauracji (np. ile osób na poranną/wieczorną zmianę).
 #    - Przemyśleć szkielet metody generującej grafik, która będzie pobierać dyspozycje z AvailabilityService.
-
 
 
 class ScheduleService:
@@ -39,19 +35,19 @@ class AvailabilityService:
         self.employee_service = main_employee_service
         
     def set_availability(self, employee_id, day, time_range):
-        # 1. Odszukaj pracownika w bazie (używając np. metody z employee_service)
-        dyspo = {}
-        dyspo[day] = time_range
-        for employee in self.employee_service.employeesBase:
-            if employee.id == employee_id:
-                employee.availability.update(dyspo)
-              # employee.availability.update({day: time_range})
-                print("Dyspozycja dodana")
+        worker = self.employee_service.get_by_id(employee_id)
+        worker.availability[day] = time_range
 
+    def get_availability(self, emlpoyee_id):
+        worker = self.employee_service.get_by_id(emlpoyee_id)
+        for day, time in worker.availability.items():
+            print(f"{day} : {time}")
+        return worker.availability
 
 class ReservationService:
     #ta klasa bedzie zapiswyala do bazy danych rezerwacje 
     pass
+
 
 class EmployeeService():
     def __init__(self):
@@ -72,7 +68,9 @@ class EmployeeService():
         for employee in self.employeesBase:
             if employee.id == id:
                 print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
-
+                return employee
+            #TODO exception when Null
+            
     def remove_employee(self, id):
         for employee in self.employeesBase:
             if employee.id == id:
@@ -80,4 +78,15 @@ class EmployeeService():
                 print(f"Usunieto pracownika z ID: {id}")
                 break
 
+
+
 main_employee_service = EmployeeService()
+main_availability_service = AvailabilityService(main_employee_service)
+
+main_employee_service.add_employee("damian", "b", "barman")
+main_employee_service.add_employee("filip", "k", "kelner")
+
+main_availability_service.set_availability(1, "Poniedzialek", "12")
+main_availability_service.set_availability(2, "Wtorek", "15")
+
+main_availability_service.get_availability(1)
