@@ -57,3 +57,80 @@ Tworzę pełnoprawną aplikację backendową (REST API) dla restauracji do intel
 5. Rozwiązywanie błędów: Jeśli program wyrzuca błąd, poproś mnie o Traceback. Wskaż linijkę i zapytaj: "Co według Ciebie oznacza ten komunikat?".
 ## Obecny stan projektu
 Buduję logikę domenową (czysty Python OOP, bez FastAPI i bazy). Mam serwisy: `Employee`, `EmployeeService`, `AvailabilityService`, `ScheduleService` (w trakcie projektowania zapotrzebowania), `ReservationService`.
+
+
+
+roblemy / rzeczy do przemyślenia
+A. Czy Employee powinien przechowywać availability?
+To jest pierwsza ważna decyzja domenowa.
+
+Obecnie robisz tak:
+
+Employee ma w sobie availability,
+AvailabilityService modyfikuje worker.availability.
+Na małą skalę jest OK, ale w większym systemie dostępność często jest osobną encją lub value objectem, np. „dyspozycyjność pracownika na konkretny dzień i przedział godzin”.
+
+Pytanie do Ciebie:
+
+Czy dyspozycyjność jest stałą cechą pracownika, czy raczej osobnym wpisem w systemie zależnym od daty?
+
+Przykład biznesowy:
+
+Damian jest barmanem — to jest cecha pracownika.
+Damian może pracować 2026-07-15 od 12:00 do 18:00 — to jest osobny fakt biznesowy.
+W systemach komercyjnych raczej nie trzyma się wszystkich takich wpisów bezpośrednio w obiekcie Employee, tylko modeluje się coś typu AvailabilitySlot / EmployeeAvailability.
+
+Na tym etapie możesz jeszcze zostać przy obecnym podejściu, ale miej świadomość, że później prawdopodobnie to rozdzielisz.
+
+A. Czy Employee powinien przechowywać availability?
+
+Generalnie nie wiem, ale wydaje mi sie ze tak, bo dyspozycja jest 
+indywidualna dla kazdego pracownika, zamysł jest taki że każdy pracownik
+podaje swoją dyspozycje na dany tydzień i na jej podstawie generowawny jest grafik
+
+Wiec intuicyjnie availability jako cecha pracownika wydaje sie w porządku.
+Dlaczego powinno byc inaczej i czy inaczej faktycznie będzie lepiej i jakie to będzie miało przełożenie?
+
+
+
+-----
+
+EmployeeService - problem 1
+
+employeeBase - w przyszłosci lista ma zostać zastąpiona bazą danych
+
+Problem 2: get_by_id ma złożoność O(n)
+generalnie raczej program ma obsługiwać max 50 użytkowników, ale myśle że warto budować wiedze i dobre nawyki
+Jendak nie wiem jaka struktura danych w Pythonie pozwala szybciej znaleźć pracownika po id: lista czy słownik?
+
+--- 
+
+generalnie printy na razie ignorujmy, to bardzo wczesna i prymitywna faza aplikacji a ja jestem początkujacy i czasami potrzebuje
+widzec efekt zeby go zrozumiec.
+
+Problem 4: add_employee nie zwraca utworzonego pracownika - naprawione: reurn new_employee
+
+I ogolnie wszystkimi wyjatkami zajme sie troche pozniej, teraz czas na pracowanie nad logiką.
+
+4. brak walidacji danych - mysle o wdrożeniu pydantic do walidacji, jesli to dobry pmysł
+
+5. reprezantacja dostępności to też cos nad czym pomyśle bardziej, poki co chcialem miec dzialajcy szkielet
+nie wszystko od razu idealnie, ale po kolei isc i ulepszac - czy to dobra droga?
+
+6.
+A: Pracownik podaje dyspozycje od godziny startu, opcjonalnie do godziny zakonczenia (nie musi gdzy jest mu to obojetne, 
+wtedy do końca zostaje osoba ktora przyszla do pracy najpozniej a pierwsza schodzi osoba ktora przyszla do pracy najwczesniej).
+Jeśli generalnie pracownik podaje słabe dyspo, nie zostaje do zamknięcia (co wiąże sie ze sprzataniem) jego "reputacja" spada i spada tez 
+szansa na dostanie wiekszej ilosci zmian - funkcjonalnosc do rozwiniecia pozniej
+
+Jedna zmiana to jeden dzień ( w skali tygodnia te zmiany pod kątem ilosc godzin przepracowanych przez rózne osoby muszą byc sprawiedliwe).
+Na zmiane przypada konkretna, domyslna ilosc osob, która moze sie zwiekszyc w zaleznosci od zapotrzebowania
+
+B: Zapotrzebowanie będzie określone na dany dzień, ma podstawie ilosci rezerwacji i ich wielkosci. W przyszlosci zamierzałem wdrożyć AI. Jeszcze nie wiem jak, na razie zostałbym przy
+domyslnych wartościach żeby cokolwiek sie generowało. 
+
+7. Architektoniczne EmployeeServie miał byc sewisem zaiwerajacym funkcjonalnosci do zarządzania bazą użytkowników, nie wiem czy to dobrze.
+
+
+
+Teraz oceń to co napisałem i podaj sensowny plan rozwiązań. 

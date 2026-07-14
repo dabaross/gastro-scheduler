@@ -18,18 +18,31 @@ class ScheduleService:
     #ta klasa bedzie miala logike generowania grafiku i mozliwosc edycji oraz eksportu
     pass
 
-# TODO: Dodać klasę Availability jako osobny obiekt domenowy.
-# TODO: Pola Availability: employee_id, date, start_time, end_time=None.
+# TODO: Dodać klasę Availability jako osobny obiekt domenowy. --
+# TODO: Pola Availability: employee_id, date, start_time, end_time=None. --
 # TODO: end_time=None oznacza, że pracownik może zostać do zamknięcia.
-# TODO: Dodać metodę can_start_at(requested_start_time).
-# TODO: Dodać metodę can_close().
+# TODO: Dodać metodę can_start_at(requested_start_time). # Czy ta konkretna dyspozycyjność pozwala pracownikowi zacząć o podanej godzinie
+# TODO: Dodać metodę can_close(). -- 
 # TODO: Użyć datetime.date i datetime.time zamiast stringów.
-# TODO: Na razie nie pisać ScheduleService.
 # TODO: Dodać 2-3 ręczne testy Availability na dole pliku.
 
-class Availability:
-    pass
+# Availability wie: od kiedy pracownik może pracować.
+# ScheduleService decyduje: którego pracownika wybrać.
 
+class Availability: #obiekt domenowy
+    def __init__(self, employee_id, date, start_time, end_time = None):
+        self.employee_id = employee_id
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def can_close(self):
+        if self.end_time is not None:
+            return False
+        if self.end_time is None:
+            return True
+        
+    
 
 class AvailabilityService:
     def __init__(self, main_employee_service):

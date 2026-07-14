@@ -1,0 +1,21 @@
+1. Grafik działa na konkretnych datach.
+2. Domyślny tydzień grafiku: poniedziałek–niedziela.
+3. Możliwe będzie późniejsze przedłużenie zakresu grafiku.
+4. Pracownik podaje jedną dyspozycyjność dziennie.
+5. Pracownik ma jedną główną rolę.
+6. Jeśli pracownik nie poda godziny końca, oznacza to dostępność do zamknięcia lokalu.
+7. Grafik pokazuje głównie godzinę rozpoczęcia pracy.
+8. Godzina zakończenia może być podana, jeśli jest znana/ograniczona.
+9. W restauracji istnieje nieformalna zasada: kto przyszedł pierwszy, ten schodzi pierwszy.
+
+Availability
+Pracownik deklaruje:
+
+data
+start_time
+end_time opcjonalne
+
+1. Zmiana otwierająca = start o 11:30.
+2. end_time=None = pracownik może zamykać lokal.
+3. Nie chcemy sytuacji: zamknięcie ok. 01:00 -> następnego dnia otwarcie 11:30,
+   chyba że nie ma innej możliwości.

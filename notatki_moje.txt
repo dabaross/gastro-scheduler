@@ -1,0 +1,51 @@
+# TODO: Availability domain model
+#
+# Cel:
+#   Wydzielić dyspozycyjność pracownika jako osobny obiekt domenowy.
+#   Availability ma reprezentować pojedynczą deklarację:
+#   "pracownik X może pracować danego dnia od konkretnej godziny,
+#   opcjonalnie do konkretnej godziny".
+#
+# Zakres tego kroku:
+#   1. Utworzyć klasę Availability.
+#   2. Przenieść myślenie o dyspozycyjności z prostego słownika w Employee
+#      do osobnego obiektu domenowego.
+#   3. Na razie NIE pisać ScheduleService.
+#   4. Na razie NIE integrować z FastAPI ani bazą danych.
+#
+# Klasa Availability powinna przechowywać:
+#   - employee_id
+#   - date
+#   - start_time
+#   - end_time opcjonalne
+#
+# Reguły biznesowe:
+#   - end_time == None oznacza, że pracownik może zostać do zamknięcia lokalu.
+#   - zmiana otwierająca zaczyna się o 11:30.
+#   - nie chcemy przypisywać osoby zamykającej lokal około 01:00
+#     na zmianę otwierającą następnego dnia o 11:30,
+#     chyba że nie ma innej możliwości.
+#
+# Metody/logika do rozważenia w Availability:
+#   - can_start_at(requested_start_time)
+#       Czy pracownik może rozpocząć pracę o podanej godzinie?
+#
+#   - can_close()
+#       Czy ta dyspozycyjność oznacza możliwość zamknięcia lokalu?
+#
+# Ręczne testy do wykonania:
+#   1. Pracownik dostępny od 12:00 może zacząć o 15:00.
+#   2. Pracownik dostępny od 16:00 nie może zacząć o 11:30.
+#   3. Availability z end_time == None zwraca, że pracownik może zamykać.
+#   4. Availability z end_time ustawionym np. na 20:00 oznacza,
+#      że pracownik nie jest osobą do zamknięcia.
+#
+# Decyzje techniczne:
+#   - Preferowane użycie datetime.date dla daty.
+#   - Preferowane użycie datetime.time dla godzin.
+#   - Jeśli tymczasowo użyte zostaną stringi, traktować to jako dług techniczny.
+#
+# Później:
+#   - AvailabilityService będzie zarządzał wieloma obiektami Availability.
+#   - ScheduleService będzie używał Availability do generowania grafiku.
+#   - W bazie danych Availability prawdopodobnie stanie się osobną tabelą.
