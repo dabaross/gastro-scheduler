@@ -1,0 +1,738 @@
+GASTRO SCHEDULER — NOTATKA ARCHITEKTONICZNA / MENTORING
+
+Kontekst:
+Buduję backendową aplikację dla restauracji do inteligentnego zarządzania grafikiem pracy.
+Na obecnym etapie pracuję w czystym Pythonie OOP, bez FastAPI i bez bazy danych.
+Mam podstawowe klasy/serwisy:
+- Employee
+- EmployeeService
+- AvailabilityService
+- ScheduleService
+- ReservationService
+
+Cel na teraz:
+Nie budować od razu idealnego systemu, ale stworzyć solidny, iteracyjnie rozwijany model domenowy, który później da się przenieść do FastAPI, PostgreSQL, SQLAlchemy i architektury service layer / DDD.
+
+
+============================================================
+1. EMPLOYEE A AVAILABILITY
+============================================================
+
+Pytanie:
+Czy Employee powinien przechowywać availability?
+
+Intuicja:
+Dyspozycyjność jest indywidualna dla każdego pracownika, więc naturalnie wydaje się, że Employee powinien mieć availability.
+
+Wniosek:
+To jest logiczne na etapie prototypu, ale docelowo warto rozważyć oddzielenie availability od Employee.
+
+Dlaczego?
+Nie wszystko, co dotyczy pracownika, musi być fizycznie trzymane jako pole w klasie Employee.
+
+Przykłady rzeczy związanych z pracownikiem:
+- dyspozycyjność,
+- historia zmian,
+- historia godzin,
+- urlopy,
+- wypłaty,
+- reputacja / score,
+- nieobecności.
+
+To wszystko dotyczy pracownika, ale w większym systemie zwykle staje się osobnym pojęciem domenowym.
+
+Employee powinien docelowo reprezentować raczej kartotekę pracownika:
+- id,
+- imię,
+- nazwisko,
+- rola / role,
+- status,
+- ewentualnie dane umowy.
+
+Availability jest osobnym faktem biznesowym:
+- konkretny pracownik,
+- konkretny dzień / data,
+- przedział godzin,
+- ewentualnie status,
+- ewentualnie informacja, czy może zamykać lokal.
+
+Przykład biznesowy:
+"Damian jest barmanem" — to cecha Employee.
+"Damian może pracować 2026-07-15 od 12:00 do 18:00" — to osobny wpis dyspozycyjności.
+
+W systemach komercyjnych częsty model:
+Employee:
+- id
+- name
+- surname
+- role
+- status
+
+AvailabilitySlot / EmployeeAvailability:
+- employee_id
+- date
+- start_time
+- end_time
+
+Na obecnym etapie:
+Można zostawić availability w Employee jako rozwiązanie przejściowe, jeśli pomaga szybko zbudować działający prototyp.
+Ale przed ScheduleService warto zacząć myśleć o availability jako osobnym koncepcie domenowym.
+
+Potencjalne problemy, jeśli availability zostanie na stałe jako słownik w Employee:
+- trudno pobrać dostępność wszystkich pracowników na konkretny tydzień,
+- trudno filtrować wszystkich dostępnych kelnerów w konkretnych godzinach,
+- trudno przechowywać historię dyspozycji,
+- trudno obsłużyć wiele przedziałów w jednym dniu,
+- trudno zapisywać to później w bazie relacyjnej,
+- Employee może stać się zbyt dużą klasą robiącą za dużo.
+
+
+============================================================
+2. LISTA CZY SŁOWNIK DO PRACOWNIKÓW
+============================================================
+
+Obecnie EmployeeService trzyma pracowników w liście.
+
+Lista:
+- wyszukiwanie po id wymaga przejścia po elementach,
+- złożoność get_by_id to O(n),
+- dla 50 pracowników wydajnościowo to nie problem,
+- ale architektonicznie lista gorzej wyraża intencję wyszukiwania po unikalnym identyfikatorze.
+
+Słownik:
+- kluczem może być employee_id,
+- wyszukiwanie po id ma średnio O(1),
+- lepiej pasuje, jeśli główna operacja to "daj pracownika po id".
+
+Wniosek:
+Przy małej skali lista wystarczy, ale edukacyjnie warto rozważyć słownik, bo uczy dobrego modelowania danych.
+
+Różnica mentalna:
+Lista mówi: mam sekwencję obiektów.
+Słownik mówi: mam zbiór obiektów indeksowanych po kluczu.
+
+Docelowo:
+Słownik/lista zostaną zastąpione bazą danych, a później repozytorium.
+Baza danych będzie wyszukiwać po id przy pomocy indeksów.
+
+
+============================================================
+3. PRINTY W SERWISACH
+============================================================
+
+Na obecnym etapie printy są akceptowalne, bo pomagają początkującemu zobaczyć efekt działania programu.
+
+Ale docelowo:
+- serwisy nie powinny drukować danych,
+- serwisy powinny zwracać dane,
+- warstwa zewnętrzna decyduje, co z tym zrobić:
+  - CLI może wypisać w konsoli,
+  - FastAPI może zwrócić JSON,
+  - test może sprawdzić wynik,
+  - logger może zapisać informację.
+
+Problem z printami w logice:
+- mieszają logikę biznesową z prezentacją,
+- utrudniają testowanie,
+- nie są przydatne dla API,
+- w produkcji zastępuje się je loggingiem.
+
+Na teraz:
+Można zostawić printy do nauki, ale trzeba pamiętać, że później powinny zostać usunięte z metod serwisowych.
+
+
+============================================================
+4. ADD_EMPLOYEE POWINIEN ZWRACAĆ WYNIK
+============================================================
+
+Dobra poprawka:
+add_employee powinno zwracać utworzonego pracownika albo przynajmniej jego id.
+
+Dlaczego?
+Bo po dodaniu pracownika program może chcieć:
+- od razu znać jego id,
+- przekazać obiekt do innego serwisu,
+- zwrócić dane w API,
+- użyć go w teście.
+
+Na etapie domeny:
+Zwracanie obiektu Employee jest OK.
+
+Później w API:
+FastAPI zwróci raczej response schema / DTO, a nie bezpośrednio obiekt domenowy.
+
+
+============================================================
+5. WYJĄTKI I OBSŁUGA BŁĘDÓW
+============================================================
+
+Na razie można zostawić pełną obsługę wyjątków na później, ale trzeba pamiętać o miejscach ryzyka.
+
+Potencjalne przypadki:
+- get_by_id nie znajduje pracownika,
+- set_availability dostaje nieistniejące employee_id,
+- remove_employee próbuje usunąć nieistniejącego pracownika,
+- pracownik ma niepoprawną dostępność,
+- dostępność ma start po końcu,
+- ScheduleService nie ma kogo przypisać do zmiany,
+- pracownik ma konflikt zmian,
+- nie da się spełnić zapotrzebowania.
+
+Docelowo:
+Warto wprowadzić kontrolowane wyjątki domenowe, np.:
+- EmployeeNotFoundError,
+- InvalidAvailabilityError,
+- ScheduleGenerationError.
+
+Na obecnym etapie:
+Można używać TODO, ale nie wolno zapominać, że te przypadki istnieją.
+
+
+============================================================
+6. PYDANTIC DO WALIDACJI
+============================================================
+
+Pydantic to dobry pomysł, ale głównie do warstwy API / DTO.
+
+Pydantic świetnie nadaje się do:
+- walidacji requestów z FastAPI,
+- response schema,
+- parsowania danych wejściowych,
+- sprawdzania typów,
+- walidacji formatu dat, godzin, stringów.
+
+Ale:
+Pydantic nie powinien całkowicie zastępować modelu domenowego.
+
+Docelowy podział w bardziej komercyjnej aplikacji:
+1. Pydantic schemas / DTO
+   - dane wejściowe i wyjściowe API
+2. Domain models
+   - logika biznesowa i reguły domenowe
+3. SQLAlchemy models
+   - zapis i odczyt z bazy danych
+
+Na początku można nie robić trzech warstw, ale warto znać docelowy kierunek.
+
+Typowy błąd:
+Robienie całej domeny jako Pydantic models tylko dlatego, że używa się FastAPI.
+W małych projektach to działa, ale w większych prowadzi do bałaganu.
+
+
+============================================================
+7. PODEJŚCIE ITERACYJNE
+============================================================
+
+Podejście "najpierw prosty szkielet, potem ulepszanie" jest dobre.
+
+Lepsze:
+1. Zrobić prosty działający przepływ.
+2. Zobaczyć, gdzie model jest za słaby.
+3. Ulepszyć model.
+4. Dopisać testy.
+5. Iść dalej.
+
+Niż:
+1. Próbować zaprojektować idealną architekturę.
+2. Nie mieć nic działającego.
+3. Zniechęcić się.
+
+Ryzyko:
+Nie można zbyt długo budować nowych funkcji na bardzo prymitywnym modelu, bo późniejszy refactor będzie bolesny.
+
+Wniosek:
+Teraz jest dobry moment, żeby lekko poprawić fundamenty przed pisaniem ScheduleService.
+
+
+============================================================
+8. DYSPOZYCYJNOŚĆ PRACOWNIKA
+============================================================
+
+Założenie biznesowe:
+Pracownik podaje dyspozycję na dany tydzień.
+Na tej podstawie generowany jest grafik.
+
+Koncepcja:
+Pracownik podaje:
+- godzinę startu,
+- opcjonalnie godzinę końca.
+
+Jeśli nie poda końca, trzeba ustalić jasną regułę.
+
+Możliwe interpretacje braku końca:
+1. Dostępny do zamknięcia lokalu.
+2. Dostępny maksymalnie X godzin.
+3. System / manager decyduje.
+4. Preferuje start, a koniec jest elastyczny.
+5. Może być przypisany do zamknięcia, jeśli potrzeba.
+
+Ważne:
+Brak godziny końca nie może być niejasny.
+System musi dokładnie wiedzieć, co to oznacza.
+
+Pytania do rozstrzygnięcia:
+- Czy restauracja ma stałą godzinę zamknięcia?
+- Czy maksymalna długość zmiany jest ograniczona?
+- Czy minimalna długość zmiany jest ograniczona?
+- Czy osoba może pracować np. 12:00–23:00?
+- Czy osoba, która przyszła najpóźniej, zawsze powinna zamykać lokal?
+- Czy pracownik może mieć wiele dostępności jednego dnia?
+- Czy dostępność jest na dzień tygodnia czy konkretną datę?
+
+Rekomendacja:
+Przed ScheduleService trzeba dokładnie zdefiniować model czasu:
+- data / dzień,
+- godzina startu,
+- godzina końca,
+- reguła dla braku końca.
+
+
+============================================================
+9. REPUTACJA / SCORE PRACOWNIKA
+============================================================
+
+Pomysł:
+Jeśli pracownik podaje słabą dyspozycyjność, nie zostaje do zamknięcia, często nie pomaga itp., jego reputacja spada.
+Niższa reputacja może zmniejszać szansę na większą liczbę zmian.
+
+Ocena:
+To ciekawa funkcjonalność, ale nie na pierwszy etap.
+
+Dlaczego nie teraz?
+Bo dodaje dużą złożoność:
+- jak liczyć reputację?
+- czy reputacja może być ujemna?
+- kto może ją zmieniać?
+- czy manager może nadpisać wynik?
+- czy system nie będzie niesprawiedliwy?
+- co z osobami mającymi obiektywne ograniczenia?
+- jak mocno reputacja wpływa na grafik?
+- czy nie pojawią się problemy etyczne / dyskryminacyjne?
+
+Rekomendacja:
+Zostawić jako przyszłą funkcjonalność:
+"employee scheduling score" albo "reliability score".
+
+Na początku generator powinien bazować na:
+1. roli,
+2. dostępności,
+3. braku konfliktów,
+4. sprawiedliwym rozdziale godzin.
+
+Score można dodać później.
+
+
+============================================================
+10. CZY JEDNA ZMIANA = JEDEN DZIEŃ?
+============================================================
+
+Początkowa koncepcja:
+Jedna zmiana to jeden dzień.
+
+Problem:
+W gastronomii "zmiana" zwykle oznacza konkretny przedział czasu w danym dniu, np.:
+- 10:00–16:00,
+- 16:00–23:00,
+- 12:00–20:00.
+
+Jeśli zmiana = cały dzień, trudno obsłużyć:
+- różne natężenie ruchu w ciągu dnia,
+- krótsze i dłuższe zmiany,
+- wieczorne zwiększenie obsady,
+- sprzątanie po zamknięciu,
+- osoby pracujące tylko rano albo tylko wieczorem.
+
+Lepsze rozróżnienie pojęć:
+
+1. Dzień grafiku
+   Przykład: poniedziałek 2026-07-15.
+
+2. Slot zapotrzebowania
+   Przykład: poniedziałek 16:00–22:00 potrzeba 3 kelnerów.
+
+3. Przydział pracownika
+   Przykład: Filip pracuje poniedziałek 15:00–22:00 jako kelner.
+
+Dzięki temu generator grafiku może być bardziej realistyczny.
+
+
+============================================================
+11. ZAPOTRZEBOWANIE NA PRACOWNIKÓW
+============================================================
+
+Docelowo:
+Zapotrzebowanie będzie zależne od:
+- liczby rezerwacji,
+- liczby gości,
+- dnia tygodnia,
+- pory dnia,
+- sezonu,
+- wydarzeń,
+- danych historycznych,
+- w przyszłości AI.
+
+Na teraz:
+Zacząć od wartości domyślnych, żeby generator miał na czym pracować.
+
+Etapy:
+
+Etap 1: statyczne zapotrzebowanie
+- ręcznie definiowane,
+- np. poniedziałek rano: 1 kelner, 1 kucharz,
+- piątek wieczór: 3 kelnerów, 1 barman, 2 kucharzy.
+
+Etap 2: zapotrzebowanie z rezerwacji
+- ReservationService przechowuje rezerwacje,
+- DemandService przelicza liczbę gości na liczbę pracowników.
+
+Przykład reguły:
+- 0–20 gości: 1 kelner,
+- 21–40 gości: 2 kelnerów,
+- 41–60 gości: 3 kelnerów.
+
+Etap 3: AI / forecasting
+- dopiero gdy są dane historyczne,
+- model przewiduje obłożenie,
+- wynik AI zasila DemandService.
+
+Ważna zasada architektoniczna:
+ScheduleService nie powinien sam liczyć zapotrzebowania z rezerwacji.
+Lepiej rozdzielić odpowiedzialności:
+
+ReservationService:
+- zarządza rezerwacjami.
+
+DemandService:
+- przelicza rezerwacje / reguły na zapotrzebowanie kadrowe.
+
+ScheduleService:
+- przypisuje pracowników do zapotrzebowania.
+
+
+============================================================
+12. EMPLOYEE SERVICE VS REPOSITORY
+============================================================
+
+Obecny EmployeeService:
+- przechowuje pracowników,
+- nadaje ID,
+- wyszukuje,
+- usuwa,
+- dodaje.
+
+To bardziej przypomina in-memory repository niż czysty service.
+
+W architekturze komercyjnej częsty podział:
+
+EmployeeRepository:
+- add
+- get_by_id
+- get_all
+- remove
+- save
+
+EmployeeService:
+- hire_employee
+- deactivate_employee
+- change_role
+- validate business rules
+
+Repository odpowiada za dostęp do danych.
+Service odpowiada za logikę biznesową.
+
+Na obecnym etapie:
+Nie trzeba tego natychmiast rozdzielać, ale warto mieć świadomość.
+Później, przy przejściu na SQLAlchemy/PostgreSQL, repozytorium będzie naturalnym miejscem na operacje bazodanowe.
+
+
+============================================================
+13. MINIMALNE POJĘCIA DOMENOWE DO ZAPROJEKTOWANIA
+============================================================
+
+Przed pisaniem ScheduleService warto zdefiniować pojęcia:
+
+1. Employee
+Pytanie: kto pracuje?
+Pola pojęciowe:
+- id,
+- name,
+- surname,
+- role / roles,
+- status.
+
+2. Availability
+Pytanie: kiedy pracownik może pracować?
+Pola pojęciowe:
+- employee_id,
+- date / day,
+- start_time,
+- end_time albo reguła braku końca,
+- ewentualnie can_close,
+- ewentualnie status.
+
+3. Demand
+Pytanie: ilu ludzi potrzebuje restauracja?
+Pola pojęciowe:
+- date / day,
+- start_time,
+- end_time,
+- role,
+- required_count.
+
+4. ShiftAssignment
+Pytanie: kto faktycznie został przypisany do pracy?
+Pola pojęciowe:
+- employee_id,
+- date,
+- start_time,
+- end_time,
+- role.
+
+Te pojęcia powinny być jasne przed pisaniem generatora grafiku.
+
+
+============================================================
+14. DATA CZY DZIEŃ TYGODNIA?
+============================================================
+
+Obecnie używane są dni typu:
+- Poniedziałek
+- Wtorek
+
+Problem:
+"Poniedziałek" powtarza się co tydzień.
+
+Pytania:
+- Który poniedziałek?
+- Ten tydzień?
+- Następny tydzień?
+- Każdy poniedziałek?
+
+W systemie produkcyjnym warto rozróżnić:
+1. Konkretna dyspozycyjność na dany tydzień.
+2. Szablon dyspozycyjności powtarzalnej.
+
+Na teraz rekomendacja:
+Pracownicy powinni podawać dyspozycję na konkretny tydzień, np. tydzień zaczynający się 2026-07-13.
+W środku systemu dobrze operować na konkretnych datach.
+
+Przykład:
+Zamiast samego "Poniedziałek":
+- 2026-07-13
+- start 12:00
+- end 20:00
+
+
+============================================================
+15. PIERWSZY ALGORYTM GENEROWANIA GRAFIKU
+============================================================
+
+Pierwszy ScheduleService powinien być bardzo prosty.
+Nie dodawać jeszcze:
+- AI,
+- reputacji,
+- skomplikowanej optymalizacji,
+- rezerwacji,
+- zaawansowanych preferencji.
+
+Wejście:
+- lista pracowników,
+- lista dostępności,
+- lista zapotrzebowań.
+
+Wyjście:
+- lista przypisań pracowników do zmian / slotów.
+
+Prosta logika:
+Dla każdego zapotrzebowania:
+1. Znajdź pracowników o wymaganej roli.
+2. Sprawdź, czy są dostępni w danym czasie.
+3. Sprawdź, czy nie mają konfliktu z inną zmianą.
+4. Preferuj pracowników z mniejszą liczbą godzin w danym tygodniu.
+5. Jeśli brakuje ludzi, oznacz problem / niedobór.
+
+Hierarchia ważności:
+1. Rola musi się zgadzać.
+2. Pracownik musi być dostępny.
+3. Nie może być konfliktu godzin.
+4. Godziny powinny być rozdzielone możliwie sprawiedliwie.
+5. Score/reputacja może wpływać później.
+
+To daje prosty, działający generator.
+
+
+============================================================
+16. HOURS_WORKED
+============================================================
+
+Pytanie:
+Czy hours_worked powinno być polem Employee?
+
+Wniosek:
+Raczej nie jako trwała cecha pracownika.
+Hours_worked to wynik grafiku / przypisań.
+
+Lepiej myśleć:
+- Employee nie "ma" godzin na stałe,
+- godziny są wyliczane z ShiftAssignment w danym okresie.
+
+Dlaczego?
+Bo liczba godzin zależy od tygodnia / miesiąca / grafiku.
+Jeśli trzymasz ją w Employee, łatwo o niespójność:
+- zmiana usunięta, ale godziny nieodjęte,
+- grafik zmieniony, ale hours_worked nieaktualne.
+
+Na razie można zostawić pomocniczo, ale docelowo lepiej liczyć godziny z przypisań.
+
+
+============================================================
+17. TESTY
+============================================================
+
+Przed wejściem w FastAPI warto dodać testy automatyczne, np. w pytest.
+
+Najważniejsze testy:
+1. Dodanie pracownika.
+2. Pobranie pracownika po ID.
+3. Obsługa nieistniejącego pracownika.
+4. Ustawienie dostępności.
+5. Sprawdzenie, czy pracownik jest dostępny w danym przedziale.
+6. Sprawdzenie, czy pracownik nie jest dostępny poza przedziałem.
+7. Wygenerowanie grafiku dla prostego zapotrzebowania.
+8. Sytuacja, gdy brakuje pracowników.
+9. Brak konfliktów godzin.
+10. Sprawiedliwe rozdzielanie godzin.
+
+Testy pomogą bezpiecznie refaktorować kod.
+
+
+============================================================
+18. PLAN DZIAŁANIA
+============================================================
+
+Najbliższy plan:
+
+Krok 1:
+Zostawić prosty szkielet aplikacji, ale uporządkować pojęcia domenowe.
+
+Krok 2:
+Zdecydować, czy Employee nadal trzyma availability, czy AvailabilityService zaczyna trzymać availability osobno jako wpisy przypisane do employee_id.
+
+Krok 3:
+Zdefiniować model Availability:
+- data czy dzień tygodnia,
+- start_time,
+- end_time,
+- co oznacza brak end_time,
+- czy możliwe jest wiele dostępności jednego dnia,
+- czy dostępność ma status,
+- czy dostępność mówi coś o zamykaniu lokalu.
+
+Krok 4:
+Zdefiniować model Demand:
+- data,
+- start_time,
+- end_time,
+- role,
+- required_count.
+
+Krok 5:
+Zdefiniować model ShiftAssignment:
+- employee_id,
+- date,
+- start_time,
+- end_time,
+- role.
+
+Krok 6:
+Napisać bardzo prosty ScheduleService:
+availability + demand + employees -> assignments.
+
+Krok 7:
+Dodać proste testy manualne, potem automatyczne.
+
+Krok 8:
+Dopiero później dodać ReservationService i DemandService przeliczający rezerwacje na zapotrzebowanie.
+
+Krok 9:
+Dopiero po działającym systemie regułowym myśleć o AI.
+
+
+============================================================
+19. DECYZJE DO PODJĘCIA
+============================================================
+
+1. Czy dostępność jest podawana na:
+   A. dzień tygodnia,
+   B. konkretną datę,
+   C. tydzień grafiku?
+
+2. Co oznacza brak godziny zakończenia?
+   A. dostępny do zamknięcia,
+   B. dostępny max X godzin,
+   C. system/manager decyduje,
+   D. inne.
+
+3. Czy jedna osoba może mieć kilka dostępności jednego dnia?
+   Przykład: 10:00–14:00 i 18:00–22:00.
+
+4. Czy pracownik ma jedną rolę czy wiele ról?
+   Przykład: ktoś może być kelnerem i barmanem.
+
+5. Czy grafik ma generować dokładne godziny pracy, czy tylko przypisywać osoby do dnia?
+
+6. Czy restauracja ma stałe godziny otwarcia i zamknięcia?
+
+7. Czy maksymalna długość zmiany jest ograniczona?
+
+8. Czy minimalna długość zmiany jest ograniczona?
+
+9. Jak rozumiana jest sprawiedliwość grafiku?
+   - równa liczba godzin,
+   - równa liczba zmian,
+   - rotacja zamknięć,
+   - uwzględnienie preferencji?
+
+10. Co zrobić, gdy nie da się spełnić zapotrzebowania?
+    - wygenerować częściowy grafik,
+    - zgłosić błąd,
+    - oznaczyć brakujące role,
+    - poprosić managera o decyzję.
+
+
+============================================================
+20. OGÓLNA REKOMENDACJA
+============================================================
+
+Nie próbować od razu budować kompletnego systemu z AI, reputacją, rezerwacjami i bazą danych.
+
+Najpierw zbudować prosty, czysty przepływ:
+
+Employee
++ Availability
++ Demand
+= ShiftAssignment
+
+Czyli:
+
+pracownicy + dyspozycyjność + zapotrzebowanie -> wygenerowany grafik
+
+Dopiero potem:
+- walidacja,
+- wyjątki,
+- testy,
+- repozytoria,
+- FastAPI,
+- PostgreSQL,
+- rezerwacje,
+- AI.
+
+Najważniejszy fundament na teraz:
+dobrze zamodelować czas:
+- data,
+- godzina startu,
+- godzina końca,
+- zapotrzebowanie,
+- przypisanie pracownika.
+
+Bez dobrego modelu czasu ScheduleService szybko stanie się chaotyczny.

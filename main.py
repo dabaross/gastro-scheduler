@@ -14,19 +14,20 @@ class Employee:
         self.hours_worked = hours_worked
 
 
-# TODO 
-# 3. Testy "na sucho" (na samym dole pliku)
-#    - Utworzyć obiekt EmployeeService i dodać 2-3 pracowników.
-#    - Utworzyć obiekt AvailabilityService (wstrzyknąć mu EmployeeService).
-#    - Wywołać set_availability i get_availability, żeby sprawdzić, czy dane poprawnie krążą.
-
-# 4. ScheduleService (Nowy, główny moduł)
-#    - Zaprojektować strukturę zapotrzebowania restauracji (np. ile osób na poranną/wieczorną zmianę).
-#    - Przemyśleć szkielet metody generującej grafik, która będzie pobierać dyspozycje z AvailabilityService.
-
-
 class ScheduleService:
     #ta klasa bedzie miala logike generowania grafiku i mozliwosc edycji oraz eksportu
+    pass
+
+# TODO: Dodać klasę Availability jako osobny obiekt domenowy.
+# TODO: Pola Availability: employee_id, date, start_time, end_time=None.
+# TODO: end_time=None oznacza, że pracownik może zostać do zamknięcia.
+# TODO: Dodać metodę can_start_at(requested_start_time).
+# TODO: Dodać metodę can_close().
+# TODO: Użyć datetime.date i datetime.time zamiast stringów.
+# TODO: Na razie nie pisać ScheduleService.
+# TODO: Dodać 2-3 ręczne testy Availability na dole pliku.
+
+class Availability:
     pass
 
 
@@ -38,8 +39,8 @@ class AvailabilityService:
         worker = self.employee_service.get_by_id(employee_id)
         worker.availability[day] = time_range
 
-    def get_availability(self, emlpoyee_id):
-        worker = self.employee_service.get_by_id(emlpoyee_id)
+    def get_availability(self, employee_id):
+        worker = self.employee_service.get_by_id(employee_id)
         for day, time in worker.availability.items():
             print(f"{day} : {time}")
         return worker.availability
@@ -59,6 +60,7 @@ class EmployeeService():
         self.employeesBase.append(new_employee)
         print(f"Added new employee with ID: {self.id}")
         self.id += 1
+        return new_employee
         
     def get_all(self):
         for employee in self.employeesBase:
