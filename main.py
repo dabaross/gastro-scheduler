@@ -1,6 +1,6 @@
 class Employee:
-    def __init__(self, id, name, surname, role, availability = None, hours_worked=None):
-        self.id = id
+    def __init__(self, employee_id, name, surname, role, availability = None, hours_worked=None):
+        self.employee_id = employee_id
         self.name = name
         self.surname = surname
         self.role = role
@@ -29,7 +29,7 @@ class ScheduleService:
 # Availability wie: od kiedy pracownik może pracować.
 # ScheduleService decyduje: którego pracownika wybrać.
 
-class Availability: #obiekt domenowy
+class Availability: #obiekt domenowy, pojedyncza deklaracaj dostępności pracownika
     def __init__(self, employee_id, date, start_time, end_time = None):
         self.employee_id = employee_id
         self.date = date
@@ -41,16 +41,21 @@ class Availability: #obiekt domenowy
             return False
         if self.end_time is None:
             return True
-        
+#mówi nam CZYM JEST DYSPOZYCJA
+# potrzebujemy tego obiektu aby móc go przypisac do kazdego dnia jako osobna dyspozycja danego pracownika na dany dzien
+# dzieki temu dyspozycja przestaje byc surowymi danymi a staje sie bardziej funkcjonalnym obiektem
+# który może powiedzieć np. praconik może zostać do zamknięcia. 
     
-
+#mówi nam JAK DODAĆ / POBRAĆ / ZMIENIĆ dyspozycje
 class AvailabilityService:
     def __init__(self, main_employee_service):
         self.employee_service = main_employee_service
         
-    def set_availability(self, employee_id, day, time_range):
+    def set_availability(self, employee_id, date, start_time, end_time = None):
         worker = self.employee_service.get_by_id(employee_id)
-        worker.availability[day] = time_range
+        worker.availability[date] = Availability(employee_id, date, start_time, end_time)
+        #pod konkretną datą zapisujemy konkretny obiekt Availability
+        #ta funkcja może niczego nie zwracać bo jedynie zmienia stan atrybutu konkretnego obirktu Employee
 
     def get_availability(self, employee_id):
         worker = self.employee_service.get_by_id(employee_id)
@@ -77,20 +82,20 @@ class EmployeeService():
         
     def get_all(self):
         for employee in self.employeesBase:
-            print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
+            print(f"ID: {employee.employee_id}, {employee.name}, {employee.surname}")
 
-    def get_by_id(self, id):
+    def get_by_id(self, employee_id):
         for employee in self.employeesBase:
-            if employee.id == id:
-                print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
+            if employee.employee_id == employee_id:
+                print(f"ID: {employee.employee_id}, {employee.name}, {employee.surname}")
                 return employee
             #TODO exception when Null
             
-    def remove_employee(self, id):
+    def remove_employee(self, employee_id):
         for employee in self.employeesBase:
-            if employee.id == id:
+            if employee.employee_id == employee_id:
                 self.employeesBase.remove(employee)
-                print(f"Usunieto pracownika z ID: {id}")
+                print(f"Usunieto pracownika z ID: {employee_id}")
                 break
 
 

@@ -19,3 +19,171 @@ end_time opcjonalne
 2. end_time=None = pracownik może zamykać lokal.
 3. Nie chcemy sytuacji: zamknięcie ok. 01:00 -> następnego dnia otwarcie 11:30,
    chyba że nie ma innej możliwości.
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Nie udzielaj zbyt dlugich wielowatkowych i zagmatwanych odpowiedzi. Skupiamy sie tylko na jednej konkretnej rzeczy.
+
+# Kontekst Projektu: Gastro Scheduler
+
+## Cel projektu
+Tworzę pełnoprawną, komercyjną aplikację backendową (REST API) dla restauracji do inteligentnego zarządzania grafikiem pracy. 
+Projekt ma prezentować wysoki rynkowy standard techniczny (mid/junior level) (portfolio-ready). 
+Głównym wyróżnikiem systemu jest docelowe wykorzystanie AI do przewidywania obłożenia lokalu (na podstawie rezerwacji, pogody itp.) i automatyczna optymalizacja zapotrzebowania na personel.
+W przyszłosci możliwa rozbudowa o spersonalizowany RAG dla obsługi.
+
+## Stos Technologiczny i Architektura (Docelowo)
+* **Język i Framework:** Python, FastAPI.
+* **Baza danych:** PostgreSQL + ORM (SQLAlchemy).
+* **Infrastruktura:** Konteneryzacja za pomocą Dockera (Docker Compose).
+* **Jakość kodu:** Testy automatyczne (Pytest) oraz interaktywna dokumentacja API (Swagger/OpenAPI).
+* **Architektura:** Logika biznesowa wydzielona do warstwy serwisów (Service Layer), ścisłe trzymanie się zasad programowania obiektowego (OOP) i czystego kodu.
+
+## Główne funkcjonalności
+1. **Zarządzanie pracownikami:** Przechowywanie danych personelu (ID, imię, nazwisko, rola).
+2. **Dyspozycyjność (Availability):** Pracownicy podają swoją dostępność na wybrane tygodnie.
+3. **Generowanie grafiku (Schedule):** 
+   * Menedżer może wygenerować grafik ręcznie lub system wygeneruje go automatycznie.
+   * Możliwość ręcznej edycji i nadpisania wygenerowanego grafiku.
+4. **Śledzenie czasu pracy i priorytetyzacja:** System zlicza przepracowane godziny. Osoby pracujące najwięcej mają pierwszeństwo przy przydzielaniu kolejnych zmian.
+5. **Rezerwacje (Reservations):** Moduł zapisywania rezerwacji stolików, który zasila moduł AI danymi o przewidywanym ruchu.
+
+## Obecny stan kodu
+Projekt jest na wczesnym etapie budowania logiki domenowej (czysty Python OOP, przed wdrożeniem frameworka webowego i bazy). Kod podzielono na dedykowane serwisy:
+* `Employee` - główny model danych (`id`, `name`, `surname`, `role`, `availability`, `hours_worked`).
+* `EmployeeService` - zarządzanie bazą pracowników.
+* `AvailabilityService` - logika zgłaszania i walidacji dyspozycyjności przez pracowników.
+* `ScheduleService` - logika układania, edytowania i eksportu grafiku.
+* `ReservationService` - obsługa wprowadzania rezerwacji.
+
+## Moje preferencje dotyczące współpracy z AI
+Projekt służy mi do nauki i solidnego wdrożenia się w komercyjne standardy pracy.
+* Nie pisz dla mnie gotowych rozwiązań ani całych klas od zera.
+* Pełnij rolę Senior Developera / Mentora: podpowiadaj odpowiednie struktury danych, wskazuj najlepsze rynkowe praktyki, zwracaj uwagę na przypadki brzegowe (edge cases) i potencjalne problemy (np. walidacja, wydajność bazy).
+* Zamiast dawać gotowy kod, zadawaj pytania pomocnicze i pomagaj mi samodzielnie rozwiązywać napotkane błędy.
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Kontekst Projektu: Gastro Scheduler
+## Twoja Rola (Persona)
+Jesteś Senior Python Backend Developerem i moim technicznym mentorem. Moim celem jest płynne przejście z pisania prostych skryptów do komercyjnej inżynierii oprogramowania (poziom solidnego Juniora/Mid Developera). Traktuj mnie jak ambitnego stażystę: wymagam cierpliwości, ale nie akceptuję pisania kodu za mnie.
+## Cel projektu
+Tworzę pełnoprawną aplikację backendową (REST API) dla restauracji do inteligentnego zarządzania grafikiem pracy. Głównym wyróżnikiem systemu jest docelowe wykorzystanie AI do przewidywania obłożenia lokalu.
+## Stos Technologiczny (Docelowo)
+* Język i Framework: Python, FastAPI.
+* Baza danych: PostgreSQL + ORM (SQLAlchemy).
+* Infrastruktura: Docker, zmienne środowiskowe, izolacja środowisk.
+* Architektura: Service Layer, DDD (Domain-Driven Design), czysty kod, OOP.
+## TWARDE ZASADY WSPÓŁPRACY (CRITICAL INSTRUCTIONS)
+1. ZERO GOTOWCÓW: Pod żadnym pozorem nie pisz dla mnie gotowych bloków kodu rozwiązujących mój problem. Jeśli o to poproszę – odmów i przypomnij o tej zasadzie.
+2. Metoda Sokratejska: Zamiast podawać odpowiedź na tacy, zadawaj mi techniczne pytania, które naprowadzą mnie na właściwy tor myślenia.
+3. Format Code Review: Jeśli wkleję swój kod, oceń go obiektywnie. Wypunktuj błędy logiczne, luki bezpieczeństwa, problemy z wydajnością (Big O) lub łamanie zasad OOP, ale pozwól mi samodzielnie nanieść poprawki.
+4. Wzorce Rynkowe: Przy każdym problemie architektonicznym wskazuj mi, jak rozwiązuje się to w systemach korporacyjnych (np. dlaczego warto użyć określonego wzorca projektowego lub struktury danych).
+5. Rozwiązywanie błędów: Jeśli program wyrzuca błąd, poproś mnie o Traceback. Wskaż linijkę i zapytaj: "Co według Ciebie oznacza ten komunikat?".
+## Obecny stan projektu
+Buduję logikę domenową (czysty Python OOP, bez FastAPI i bazy). Mam serwisy: `Employee`, `EmployeeService`, `AvailabilityService`, `ScheduleService` (w trakcie projektowania zapotrzebowania), `ReservationService`.
+
+
+
+roblemy / rzeczy do przemyślenia
+A. Czy Employee powinien przechowywać availability?
+To jest pierwsza ważna decyzja domenowa.
+
+Obecnie robisz tak:
+
+Employee ma w sobie availability,
+AvailabilityService modyfikuje worker.availability.
+Na małą skalę jest OK, ale w większym systemie dostępność często jest osobną encją lub value objectem, np. „dyspozycyjność pracownika na konkretny dzień i przedział godzin”.
+
+Pytanie do Ciebie:
+
+Czy dyspozycyjność jest stałą cechą pracownika, czy raczej osobnym wpisem w systemie zależnym od daty?
+
+Przykład biznesowy:
+
+Damian jest barmanem — to jest cecha pracownika.
+Damian może pracować 2026-07-15 od 12:00 do 18:00 — to jest osobny fakt biznesowy.
+W systemach komercyjnych raczej nie trzyma się wszystkich takich wpisów bezpośrednio w obiekcie Employee, tylko modeluje się coś typu AvailabilitySlot / EmployeeAvailability.
+
+Na tym etapie możesz jeszcze zostać przy obecnym podejściu, ale miej świadomość, że później prawdopodobnie to rozdzielisz.
+
+A. Czy Employee powinien przechowywać availability?
+
+Generalnie nie wiem, ale wydaje mi sie ze tak, bo dyspozycja jest 
+indywidualna dla kazdego pracownika, zamysł jest taki że każdy pracownik
+podaje swoją dyspozycje na dany tydzień i na jej podstawie generowawny jest grafik
+
+Wiec intuicyjnie availability jako cecha pracownika wydaje sie w porządku.
+Dlaczego powinno byc inaczej i czy inaczej faktycznie będzie lepiej i jakie to będzie miało przełożenie?
+
+
+
+-----
+
+EmployeeService - problem 1
+
+employeeBase - w przyszłosci lista ma zostać zastąpiona bazą danych
+
+Problem 2: get_by_id ma złożoność O(n)
+generalnie raczej program ma obsługiwać max 50 użytkowników, ale myśle że warto budować wiedze i dobre nawyki
+Jendak nie wiem jaka struktura danych w Pythonie pozwala szybciej znaleźć pracownika po id: lista czy słownik?
+
+--- 
+
+generalnie printy na razie ignorujmy, to bardzo wczesna i prymitywna faza aplikacji a ja jestem początkujacy i czasami potrzebuje
+widzec efekt zeby go zrozumiec.
+
+Problem 4: add_employee nie zwraca utworzonego pracownika - naprawione: reurn new_employee
+
+I ogolnie wszystkimi wyjatkami zajme sie troche pozniej, teraz czas na pracowanie nad logiką.
+
+4. brak walidacji danych - mysle o wdrożeniu pydantic do walidacji, jesli to dobry pmysł
+
+5. reprezantacja dostępności to też cos nad czym pomyśle bardziej, poki co chcialem miec dzialajcy szkielet
+nie wszystko od razu idealnie, ale po kolei isc i ulepszac - czy to dobra droga?
+
+6.
+A: Pracownik podaje dyspozycje od godziny startu, opcjonalnie do godziny zakonczenia (nie musi gdzy jest mu to obojetne, 
+wtedy do końca zostaje osoba ktora przyszla do pracy najpozniej a pierwsza schodzi osoba ktora przyszla do pracy najwczesniej).
+Jeśli generalnie pracownik podaje słabe dyspo, nie zostaje do zamknięcia (co wiąże sie ze sprzataniem) jego "reputacja" spada i spada tez 
+szansa na dostanie wiekszej ilosci zmian - funkcjonalnosc do rozwiniecia pozniej
+
+Jedna zmiana to jeden dzień ( w skali tygodnia te zmiany pod kątem ilosc godzin przepracowanych przez rózne osoby muszą byc sprawiedliwe).
+Na zmiane przypada konkretna, domyslna ilosc osob, która moze sie zwiekszyc w zaleznosci od zapotrzebowania
+
+B: Zapotrzebowanie będzie określone na dany dzień, ma podstawie ilosci rezerwacji i ich wielkosci. W przyszlosci zamierzałem wdrożyć AI. Jeszcze nie wiem jak, na razie zostałbym przy
+domyslnych wartościach żeby cokolwiek sie generowało. 
+
+7. Architektoniczne EmployeeServie miał byc sewisem zaiwerajacym funkcjonalnosci do zarządzania bazą użytkowników, nie wiem czy to dobrze.
+
+1. Grafik działa na konkretnych datach.
+2. Domyślny tydzień grafiku: poniedziałek–niedziela.
+3. Możliwe będzie późniejsze przedłużenie zakresu grafiku.
+4. Pracownik podaje jedną dyspozycyjność dziennie.
+5. Pracownik ma jedną główną rolę.
+6. Jeśli pracownik nie poda godziny końca, oznacza to dostępność do zamknięcia lokalu.
+7. Grafik pokazuje głównie godzinę rozpoczęcia pracy.
+8. Godzina zakończenia może być podana, jeśli jest znana/ograniczona.
+9. W restauracji istnieje nieformalna zasada: kto przyszedł pierwszy, ten schodzi pierwszy.
+
+Availability
+Pracownik deklaruje:
+
+data
+start_time
+end_time opcjonalne
+
+1. Zmiana otwierająca = start o 11:30.
+2. end_time=None = pracownik może zamykać lokal.
+3. Nie chcemy sytuacji: zamknięcie ok. 01:00 -> następnego dnia otwarcie 11:30,
+   chyba że nie ma innej możliwości.
+
