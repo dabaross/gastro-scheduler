@@ -18,17 +18,9 @@ class ScheduleService:
     #ta klasa bedzie miala logike generowania grafiku i mozliwosc edycji oraz eksportu
     pass
 
-# TODO: Dodać klasę Availability jako osobny obiekt domenowy. --
-# TODO: Pola Availability: employee_id, date, start_time, end_time=None. --
-# TODO: end_time=None oznacza, że pracownik może zostać do zamknięcia.
-# TODO: Dodać metodę can_start_at(requested_start_time). # Czy ta konkretna dyspozycyjność pozwala pracownikowi zacząć o podanej godzinie
-# TODO: Dodać metodę can_close(). -- 
-# TODO: Użyć datetime.date i datetime.time zamiast stringów.
-# TODO: Dodać 2-3 ręczne testy Availability na dole pliku.
-
 # Availability wie: od kiedy pracownik może pracować.
 # ScheduleService decyduje: którego pracownika wybrać.
-
+#w bardziej sensownym modelu dyspozycyjność jest osobnym faktem biznesowym, który ma referencję do pracownika.
 class Availability: #obiekt domenowy, pojedyncza deklaracaj dostępności pracownika
     def __init__(self, employee_id, date, start_time, end_time = None):
         self.employee_id = employee_id
@@ -89,7 +81,7 @@ class EmployeeService():
             if employee.employee_id == employee_id:
                 print(f"ID: {employee.employee_id}, {employee.name}, {employee.surname}")
                 return employee
-            #TODO exception when Null
+        raise ValueError("Employee not found")
             
     def remove_employee(self, employee_id):
         for employee in self.employeesBase:
