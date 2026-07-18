@@ -1,6 +1,6 @@
 class Employee:
-    def __init__(self, id, name, surname, role, availability = None, hours_worked=None):
-        self.id = id
+    def __init__(self, employee_id, name, surname, role, availability = None, hours_worked=None):
+        self.employee_id = employee_id
         self.name = name
         self.surname = surname
         self.role = role
@@ -14,32 +14,43 @@ class Employee:
         self.hours_worked = hours_worked
 
 
-# TODO 
-# 3. Testy "na sucho" (na samym dole pliku)
-#    - Utworzyć obiekt EmployeeService i dodać 2-3 pracowników.
-#    - Utworzyć obiekt AvailabilityService (wstrzyknąć mu EmployeeService).
-#    - Wywołać set_availability i get_availability, żeby sprawdzić, czy dane poprawnie krążą.
-
-# 4. ScheduleService (Nowy, główny moduł)
-#    - Zaprojektować strukturę zapotrzebowania restauracji (np. ile osób na poranną/wieczorną zmianę).
-#    - Przemyśleć szkielet metody generującej grafik, która będzie pobierać dyspozycje z AvailabilityService.
-
-
 class ScheduleService:
     #ta klasa bedzie miala logike generowania grafiku i mozliwosc edycji oraz eksportu
     pass
 
+# Availability wie: od kiedy pracownik może pracować.
+# ScheduleService decyduje: którego pracownika wybrać.
+#w bardziej sensownym modelu dyspozycyjność jest osobnym faktem biznesowym, który ma referencję do pracownika.
+class Availability: #obiekt domenowy, pojedyncza deklaracaj dostępności pracownika
+    def __init__(self, employee_id, date, start_time, end_time = None):
+        self.employee_id = employee_id
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
 
+    def can_close(self):
+        if self.end_time is not None:
+            return False
+        if self.end_time is None:
+            return True
+#mówi nam CZYM JEST DYSPOZYCJA
+# potrzebujemy tego obiektu aby móc go przypisac do kazdego dnia jako osobna dyspozycja danego pracownika na dany dzien
+# dzieki temu dyspozycja przestaje byc surowymi danymi a staje sie bardziej funkcjonalnym obiektem
+# który może powiedzieć np. praconik może zostać do zamknięcia. 
+    
+#mówi nam JAK DODAĆ / POBRAĆ / ZMIENIĆ dyspozycje
 class AvailabilityService:
     def __init__(self, main_employee_service):
         self.employee_service = main_employee_service
         
-    def set_availability(self, employee_id, day, time_range):
+    def set_availability(self, employee_id, date, start_time, end_time = None):
         worker = self.employee_service.get_by_id(employee_id)
-        worker.availability[day] = time_range
+        worker.availability[date] = Availability(employee_id, date, start_time, end_time)
+        #pod konkretną datą zapisujemy konkretny obiekt Availability
+        #ta funkcja może niczego nie zwracać bo jedynie zmienia stan atrybutu konkretnego obirktu Employee
 
-    def get_availability(self, emlpoyee_id):
-        worker = self.employee_service.get_by_id(emlpoyee_id)
+    def get_availability(self, employee_id):
+        worker = self.employee_service.get_by_id(employee_id)
         for day, time in worker.availability.items():
             print(f"{day} : {time}")
         return worker.availability
@@ -59,23 +70,24 @@ class EmployeeService():
         self.employeesBase.append(new_employee)
         print(f"Added new employee with ID: {self.id}")
         self.id += 1
+        return new_employee
         
     def get_all(self):
         for employee in self.employeesBase:
-            print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
+            print(f"ID: {employee.employee_id}, {employee.name}, {employee.surname}")
 
-    def get_by_id(self, id):
+    def get_by_id(self, employee_id):
         for employee in self.employeesBase:
-            if employee.id == id:
-                print(f"ID: {employee.id}, {employee.name}, {employee.surname}")
+            if employee.employee_id == employee_id:
+                print(f"ID: {employee.employee_id}, {employee.name}, {employee.surname}")
                 return employee
-            #TODO exception when Null
+        raise ValueError("Employee not found")
             
-    def remove_employee(self, id):
+    def remove_employee(self, employee_id):
         for employee in self.employeesBase:
-            if employee.id == id:
+            if employee.employee_id == employee_id:
                 self.employeesBase.remove(employee)
-                print(f"Usunieto pracownika z ID: {id}")
+                print(f"Usunieto pracownika z ID: {employee_id}")
                 break
 
 
