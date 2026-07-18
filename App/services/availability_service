@@ -1,0 +1,18 @@
+from App.models.availability import Availability
+
+#mówi nam JAK DODAĆ / POBRAĆ / ZMIENIĆ dyspozycje
+class AvailabilityService:
+    def __init__(self, main_employee_service):
+        self.employee_service = main_employee_service
+        
+    def set_availability(self, employee_id, date, start_time, end_time = None):
+        worker = self.employee_service.get_by_id(employee_id)
+        worker.availability[date] = Availability(employee_id, date, start_time, end_time)
+        #pod konkretną datą zapisujemy konkretny obiekt Availability
+        #ta funkcja może niczego nie zwracać bo jedynie zmienia stan atrybutu konkretnego obirktu Employee
+
+    def get_availability(self, employee_id):
+        worker = self.employee_service.get_by_id(employee_id)
+        for day, time in worker.availability.items():
+            print(f"{day} : {time}")
+        return worker.availability
